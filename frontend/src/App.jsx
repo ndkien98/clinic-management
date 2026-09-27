@@ -31,7 +31,8 @@ import {
   TrendingUp,
   Cpu,
   Sparkles,
-  ClipboardList
+  ClipboardList,
+  Menu
 } from 'lucide-react';
 import { patientApi, clinicApi, masterApi, API_BASE_URL } from './api/client';
 
@@ -39,6 +40,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState('connecting');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dữ liệu từ API Backend / PostgreSQL
   const [patients, setPatients] = useState([]);
@@ -553,27 +555,50 @@ export default function App() {
         ))}
       </div>
 
-      {/* Sidebar Navigation */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-xl z-20">
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 md:hidden transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Navigation (Desktop + Mobile Slide-over Drawer) */}
+      <aside className={`fixed md:static inset-y-0 left-0 w-72 md:w-64 bg-slate-900 text-white flex flex-col justify-between shadow-2xl md:shadow-xl z-50 md:z-20 transform transition-transform duration-300 ease-in-out shrink-0 ${
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
         <div>
-          <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800 bg-slate-950/40">
-            <div className="w-9 h-9 rounded-lg bg-teal-500 flex items-center justify-center shadow-lg shadow-teal-500/30">
-              <Stethoscope className="w-5 h-5 text-white" />
+          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-950/40">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-teal-500 flex items-center justify-center shadow-lg shadow-teal-500/30">
+                <Stethoscope className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="font-bold text-base tracking-tight text-white block leading-none">CLINIC MASTER</span>
+                <span className="text-[10px] text-teal-400 font-medium tracking-wider">HỆ CSDL PHÒNG KHÁM</span>
+              </div>
             </div>
-            <div>
-              <span className="font-bold text-base tracking-tight text-white block leading-none">CLINIC MASTER</span>
-              <span className="text-[10px] text-teal-400 font-medium tracking-wider">HỆ CSDL PHÒNG KHÁM</span>
-            </div>
+            {/* Close Button on Mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+              title="Đóng menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <nav className="p-4 space-y-1.5">
+          <nav className="p-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-14rem)]">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setMobileMenuOpen(false);
+                  }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-teal-600 text-white shadow-md shadow-teal-900/40'
@@ -612,20 +637,30 @@ export default function App() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200/80 px-8 flex items-center justify-between shadow-xs">
-          <div>
-            <h1 className="text-lg font-bold text-slate-800">
-              {navItems.find((n) => n.id === activeTab)?.label}
-            </h1>
-            <p className="text-xs text-slate-500">Phòng khám đa khoa tư nhân • Quản lý chuyên sâu & Đợt điều trị BCNF</p>
+        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between shadow-xs shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Hamburger Button on Mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+              title="Mở thanh điều hướng"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="truncate">
+              <h1 className="text-base sm:text-lg font-bold text-slate-800 truncate">
+                {navItems.find((n) => n.id === activeTab)?.label}
+              </h1>
+              <p className="text-[11px] text-slate-500 hidden sm:block truncate">Phòng khám đa khoa tư nhân • Quản lý chuyên sâu & Đợt điều trị BCNF</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Backend Connection Status Badge */}
             <div 
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${
+              className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-medium border transition-all ${
                 apiStatus === 'connected' 
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                   : apiStatus === 'connecting'
@@ -641,8 +676,8 @@ export default function App() {
                   ? 'bg-amber-500 animate-ping'
                   : 'bg-rose-500'
               }`} />
-              <span>BE: {apiStatus === 'connected' ? 'Online' : apiStatus === 'connecting' ? 'Connecting...' : 'Offline'}</span>
-              <span className="text-[10px] opacity-75 font-mono hidden sm:inline">({API_BASE_URL})</span>
+              <span>{apiStatus === 'connected' ? 'BE Online' : apiStatus === 'connecting' ? 'Connecting...' : 'BE Offline'}</span>
+              <span className="text-[10px] opacity-75 font-mono hidden lg:inline">({API_BASE_URL})</span>
             </div>
 
             {/* Refresh Data Button */}
@@ -655,33 +690,35 @@ export default function App() {
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-teal-600' : ''}`} />
             </button>
 
-            <div className="relative">
+            <div className="relative hidden md:block">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Tìm bệnh nhân, SĐT, CCCD..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-1.5 text-xs bg-slate-100 rounded-lg border-0 focus:ring-2 focus:ring-teal-500 w-52 sm:w-64 text-slate-700"
+                className="pl-9 pr-4 py-1.5 text-xs bg-slate-100 rounded-lg border-0 focus:ring-2 focus:ring-teal-500 w-44 lg:w-64 text-slate-700"
               />
             </div>
+
             <button
               onClick={() => setShowAddPatientModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
-              Tiếp Nhận Mới
+              <span className="hidden sm:inline">Tiếp Nhận Mới</span>
+              <span className="sm:hidden">Thêm</span>
             </button>
           </div>
         </header>
 
         {/* Scrollable Page Body */}
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-24 md:pb-8">
           {/* TAB 1: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {/* Stat Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                 <div className="bg-white p-5 rounded-xl border border-slate-200/70 shadow-xs">
                   <div className="flex justify-between items-center text-slate-500 text-xs font-semibold uppercase tracking-wider">
                     Tổng Bệnh Nhân
@@ -913,7 +950,7 @@ export default function App() {
                   Tiếp Nhận & Ghi Nhận Khám Bệnh (LanKham sang PostgreSQL)
                 </h2>
                 <form onSubmit={handleSaveExamination} className="space-y-4 text-xs">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-slate-600 font-medium mb-1">Chọn Bệnh Nhân *</label>
                       <select
@@ -1004,7 +1041,7 @@ export default function App() {
                     </div>
 
                     {examForm.openTreatment && (
-                      <div className="grid grid-cols-3 gap-3 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                         <div>
                           <label className="block text-slate-600 font-medium mb-1">Chẩn Đoán Bệnh *</label>
                           <select
@@ -2278,7 +2315,7 @@ export default function App() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-700 font-medium mb-1">Giới Tính *</label>
                   <select
@@ -2301,7 +2338,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-700 font-medium mb-1">Số CCCD (Duy nhất) *</label>
                   <input
@@ -2394,6 +2431,53 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 z-30 flex items-center justify-around py-2 px-1 shadow-2xl backdrop-blur-md bg-slate-900/95">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+            activeTab === 'dashboard' ? 'text-teal-400 bg-slate-800 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          <span>Tổng quan</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('reception')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+            activeTab === 'reception' ? 'text-teal-400 bg-slate-800 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Bệnh nhân</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('examination')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+            activeTab === 'examination' ? 'text-teal-400 bg-slate-800 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Stethoscope className="w-4 h-4" />
+          <span>Khám bệnh</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('billing')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+            activeTab === 'billing' ? 'text-teal-400 bg-slate-800 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Receipt className="w-4 h-4" />
+          <span>Viện phí</span>
+        </button>
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium text-slate-400 hover:text-teal-400 transition"
+        >
+          <Menu className="w-4 h-4" />
+          <span>Menu</span>
+        </button>
+      </div>
     </div>
   );
 }
