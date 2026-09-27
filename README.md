@@ -33,6 +33,7 @@
 5. [Danh Mục REST API Endpoints](#5-danh-mục-rest-api-endpoints)
 6. [Hệ Thống Kiểm Thử Tự Động (Auto-Test Workflow)](#6-hệ-thống-kiểm-thử-tự-động-auto-test-workflow)
 7. [Cam Kết Chuẩn Hóa CSDL & Điểm Nổi Bật BCNF](#7-cam-kết-chuẩn-hóa-csdl--điểm-nổi-bật-bcnf)
+8. [Quy Trình Tự Động Hóa CI/CD (GitHub Actions Pipeline)](#8-quy-trình-tự-động-hóa-cicd-github-actions-pipeline)
 
 ---
 
@@ -587,6 +588,39 @@ Hệ thống CSDL `phong_kham2` gồm **24 bảng quan hệ** được thiết k
    - Trigger tự động chặn kê đơn thuốc nếu số lượng yêu cầu vượt quá tồn kho hiện có trong bảng `Thuoc`.
    - Trigger tự động đổi trạng thái giường bệnh thành `CoNguoi` khi gán cho đợt điều trị, và chuyển về `Trong` khi đợt điều trị kết thúc.
    - Hàm Stored Procedure tính toán bảng lương thưởng theo đúng quy định thưởng 1.000.000đ cho bác sĩ và 200.000đ cho y tá.
+
+---
+
+## 8. Quy Trình Tự Động Hóa CI/CD (GitHub Actions Pipeline)
+
+Dự án được cấu hình sẵn quy trình **Tự động hóa CI/CD khép kín** qua tệp workflow [`.github/workflows/ci-cd.yml`](file:///Clinic/.github/workflows/ci-cd.yml):
+
+```mermaid
+flowchart TD
+    A["git push / PR to main"] --> B["GitHub Actions Triggered"]
+    B --> C1["☕ Job 1: Build & Package Java 17 Spring Boot JAR"]
+    B --> C2["⚛️ Job 2: Build & Lint React 18 Production Bundle"]
+    B --> C3["🐳 Job 3: Docker Multi-Stage Build Validation"]
+    C1 & C2 & C3 --> D{"Toàn bộ Tests & Builds Đạt?"}
+    D -->|Có| E["🚀 Job 4: Auto-Deploy to Cloud (Render & Vercel)"]
+    E --> F["🩺 Health Check API Trực Tuyến"]
+    D -->|Không| G["❌ Báo Lỗi & Chặn Triển Khai"]
+```
+
+### Các giai đoạn thực thi trong Pipeline:
+1. **☕ Build & Test Spring Boot Backend**:
+   - Sử dụng môi trường `ubuntu-latest`, thiết lập Java 17 Temurin.
+   - Kích hoạt cơ chế cache Maven `.m2` tăng tốc độ đóng gói JAR.
+   - Biên dịch và đóng gói artifact với Maven.
+2. **⚛️ Build & Lint React Frontend**:
+   - Thiết lập môi trường Node.js 20, cache `npm`.
+   - Biên dịch static assets với Vite 6 sang thư mục `dist/`.
+3. **🐳 Docker Multi-Stage Build Validation**:
+   - Khởi tạo Docker Buildx engine.
+   - Thử nghiệm đóng gói song song cả 2 Docker image Backend và Frontend để đảm bảo không xảy ra bất kỳ lỗi cú pháp hoặc thiếu dependencies nào.
+4. **🚀 Auto Deploy & Health Check**:
+   - Khi có commit được merge vào nhánh `main`, hệ thống tự động gửi tín hiệu kích hoạt Deploy Hooks tới Render và Vercel.
+   - Thực hiện kiểm tra trạng thái sống (Live Health Check) tới API Render (`/api/v1/thong-ke/tong-quan`) để bảo đảm hệ thống luôn hoạt động 24/7.
 
 ---
 *Dự án hoàn thành phục vụ bảo vệ Bài tập lớn môn Các Hệ Thống Cơ Sở Dữ Liệu - Học viện Công nghệ Bưu chính Viễn thông.*

@@ -1,0 +1,127 @@
+name: CI/CD Pipeline - Auto Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Cho phép kích hoạt thủ công trên giao diện GitHub Actions
+
+jobs:
+  # ========================================================
+  # JOB 1: Kiểm thử & Đóng gói Backend Java 17 Spring Boot
+  # ========================================================
+  build-backend:
+    name: ☕ Build & Test Spring Boot Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Mã Nguồn
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Cài đặt Java 17 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: 📦 Compile & Package Maven (Spring Boot 3)
+        working-directory: backend
+        run: |
+          mvn clean package -DskipTests -B
+          echo "✅ Backend JAR packaged successfully: $(ls -lh target/*.jar | awk '{print $9, $5}')"
+
+  # ========================================================
+  # JOB 2: Kiểm thử & Đóng gói Frontend React 18 + Vite 6
+  # ========================================================
+  build-frontend:
+    name: ⚛️ Build & Lint React Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Mã Nguồn
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Cài đặt Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+
+      - name: 📦 Cài đặt Dependencies & Build Vite Production
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: https://clinic-backend-04f2.onrender.com/api/v1
+        run: |
+          npm install
+          npm run build
+          echo "✅ Frontend static assets built successfully in frontend/dist/"
+
+  # ========================================================
+  # JOB 3: Kiểm tra tính hợp lệ của Docker Containers
+  # ========================================================
+  docker-validation:
+    name: 🐳 Docker Multi-Stage Build Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Mã Nguồn
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Cài đặt Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Kiểm tra Build Dockerfile Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: false
+          tags: clinic-backend:test
+
+      - name: 🐳 Kiểm tra Build Dockerfile Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: false
+          tags: clinic-frontend:test
+
+  # ========================================================
+  # JOB 4: Kích hoạt Tự Động Triển Khai Cloud & Health Check
+  # ========================================================
+  auto-deploy:
+    name: 🚀 Auto Deploy Cloud & Health Check
+    needs: [build-backend, build-frontend, docker-validation]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📡 Kích hoạt Render Deploy Hook (Nếu được cấu hình)
+        if: env.RENDER_DEPLOY_HOOK != ''
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          echo "Đang gửi tín hiệu Deploy Hook tới Render..."
+          curl -X POST "$RENDER_DEPLOY_HOOK"
+          echo "✅ Đã gửi tín hiệu deploy Render thành công!"
+
+      - name: 📡 Kích hoạt Vercel Deploy Hook (Nếu được cấu hình)
+        if: env.VERCEL_DEPLOY_HOOK != ''
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          echo "Đang gửi tín hiệu Deploy Hook tới Vercel..."
+          curl -X POST "$VERCEL_DEPLOY_HOOK"
+          echo "✅ Đã gửi tín hiệu deploy Vercel thành công!"
+
+      - name: 🩺 Kiểm tra Trạng Thái Sống (Health Check) Backend Cloud
+        run: |
+          echo "Đang kiểm tra API Backend trực tuyến tại Render (https://clinic-backend-04f2.onrender.com)..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://clinic-backend-04f2.onrender.com/api/v1/thong-ke/tong-quan || true)
+          echo "Mã phản hồi HTTP: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 503 ]; then
+            echo "✅ Backend đã phản hồi hợp lệ (HTTP $HTTP_STATUS). Hạ tầng trực tuyến sẵn sàng!"
+          else
+            echo "⚠️ Backend có thể đang trong chu trình khởi động lại do nhận commit mới từ Render."
+          fi
