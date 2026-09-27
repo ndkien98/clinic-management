@@ -21,6 +21,10 @@
 | **Swagger UI** | SpringDoc OpenAPI 3 | `http://localhost:8080/swagger-ui.html` |
 | **Frontend UI** | React 18 + Vite 6 + Tailwind CSS | `http://localhost:5173` (Dev) hoặc `http://localhost:80` (Nginx) |
 | **Triển khai 1 lệnh** | Docker Compose (`Clinic/deploy`) | `start.bat` (Windows), `start.sh` (Linux/macOS) |
+| **Cloud Database** | **Neon.tech (PostgreSQL 17)** | Host: `ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech`<br>Port: `5432`<br>Database: `neondb`<br>User: `neondb_owner`<br>Password: `npg_d5YybOm3HShF`<br>SSL Mode: `Require` |
+| **Cloud Backend API** | **Render.com Web Service** | `https://clinic-backend-04f2.onrender.com`<br>API: `https://clinic-backend-04f2.onrender.com/api/v1`<br>Swagger: `https://clinic-backend-04f2.onrender.com/swagger-ui.html` |
+| **Cloud Frontend UI** | **Vercel.com** | Kết nối qua `VITE_API_BASE_URL` |
+| **GitHub Repository** | GitHub Student | `https://github.com/ndkien98/clinic-management` |
 
 ---
 

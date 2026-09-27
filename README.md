@@ -14,6 +14,7 @@
 3. [Hướng Dẫn Cài Đặt & Khởi Chạy](#3-hướng-dẫn-cài-đặt--khởi-chạy)
    - [Cách 1: Khởi chạy 1 lệnh với Docker (Khuyến nghị)](#cách-1-chạy-1-lệnh-bằng-docker-khuyến-nghị)
    - [Cách 2: Khởi chạy thủ công từng dịch vụ (Local Development)](#cách-2-chạy-từng-thành-phần-thủ-công-local-dev)
+   - [Cách 3: Triển khai Cloud & Thông số kết nối Online (Production Details)](#cách-3-triển-khai-cloud--thông-số-kết-nối-trực-tuyến-production-details)
 4. [MÔ TẢ CHI TIẾT TẤT CẢ TÍNH NĂNG & HƯỚNG DẪN SỬ DỤNG](#4-mô-tả-chi-tiết-tất-cả-tính-năng--hướng-dẫn-sử-dụng)
    - [4.1. Bảng Điều Khiển Tổng Quan (Dashboard)](#41-bảng-điều-khiển-tổng-quan-dashboard)
    - [4.2. Tiếp Nhận & Quản Lý Hồ Sơ Bệnh Nhân (Reception)](#42-tiếp-nhận--quản-lý-hồ-sơ-bệnh-nhân-reception)
@@ -180,6 +181,59 @@ npm run dev
 ```
 Mở trình duyệt truy cập: **`http://localhost:5173`**.
 > **💡 Trực quan hóa kết nối trên Header**: Ngay trên thanh Header của giao diện, hệ thống hiển thị badge trạng thái kết nối Backend (`BE: Online (http://localhost:8080/api/v1)`) kèm nút đồng bộ/tải lại dữ liệu trực tiếp, giúp người dùng dễ dàng theo dõi URL và trạng thái kết nối thời gian thực.
+
+---
+
+### Cách 3: Triển Khai Cloud & Thông Số Kết Nối Trực Tuyến (Production Details)
+
+Toàn bộ hệ thống phòng khám đã được cấu hình và triển khai thực tế trên hạ tầng đám mây (Cloud Serverless & Container). Dưới đây là toàn bộ thông số kết nối chính thức:
+
+#### 1. Cơ Sở Dữ Liệu Cloud: Neon.tech (PostgreSQL 17)
+- **Host**: `ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech`  
+  *(Lưu ý: Luôn giữ nguyên tiền tố `ep-little-` ở đầu host name)*
+- **Port**: `5432`
+- **Database**: `neondb`
+- **Username**: `neondb_owner`
+- **Password**: `npg_d5YybOm3HShF`
+- **SSL / TLS Mode**: Bắt buộc chọn **`Require`**
+- **Chuỗi kết nối JDBC (Java Spring Boot)**:
+  ```
+  jdbc:postgresql://ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require
+  ```
+- **Chuỗi kết nối Connection String (URI)**:
+  ```
+  postgresql://neondb_owner:npg_d5YybOm3HShF@ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require
+  ```
+
+> **📌 Hướng dẫn kết nối qua các phần mềm quản trị CSDL (DBeaver, Navicat, pgAdmin, DataGrip)**:
+> 1. Mở phần mềm (DBeaver / Navicat) -> Chọn tạo kết nối mới: **PostgreSQL**.
+> 2. **Tab Main (Chính)**:
+>    - **Host**: `ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech`
+>    - **Port**: `5432`
+>    - **Database**: `neondb`
+>    - **Username**: `neondb_owner`
+>    - **Password**: `npg_d5YybOm3HShF`
+> 3. **Tab SSH/SSL**:
+>    - Chuyển sang tab **SSH/SSL** ở thanh phía trên.
+>    - Tích chọn **Use SSL** (Sử dụng SSL).
+>    - Mục **SSL Mode**: Chọn **`Require`** (hoặc `verify-ca` / `verify-full`).
+> 4. Nhấn **Test Connection** -> Hệ thống báo *"Connected successfully"* -> Nhấn **OK/Finish**.
+> 5. CSDL đã chứa toàn bộ 24 bảng dữ liệu chuẩn BCNF và dữ liệu mẫu đầy đủ.
+
+#### 2. Backend Cloud: Render.com Web Service
+- **Tên dịch vụ**: `clinic-backend`
+- **Trạng thái**: **Live 🎉 (Đang hoạt động trực tuyến)**
+- **Địa chỉ chính (Primary Live URL)**: [https://clinic-backend-04f2.onrender.com](https://clinic-backend-04f2.onrender.com)
+- **API Base URL**: `https://clinic-backend-04f2.onrender.com/api/v1`
+- **Tài liệu Swagger UI tương tác**: [https://clinic-backend-04f2.onrender.com/swagger-ui.html](https://clinic-backend-04f2.onrender.com/swagger-ui.html)
+- **OpenAPI 3.0 Schema**: [https://clinic-backend-04f2.onrender.com/v3/api-docs](https://clinic-backend-04f2.onrender.com/v3/api-docs)
+
+#### 3. Frontend Cloud: Vercel.com
+- **Mã nguồn GitHub**: [https://github.com/ndkien98/clinic-management](https://github.com/ndkien98/clinic-management)
+- **Root Directory**: `frontend`
+- **Framework Preset**: `Vite`
+- **Biến môi trường (Environment Variable)**:
+  - `VITE_API_BASE_URL` = `https://clinic-backend-04f2.onrender.com/api/v1`
 
 ---
 

@@ -93,3 +93,29 @@
 * Các ràng buộc về số lượng các bản ghi
 	+ ràng buộc về liên kết
 	+ trong CSDL cần phải được thể hiện đầy đủ trong báo cáo.
+
+================================================================================
+THÔNG TIN TRIỂN KHAI CLOUD & KẾT NỐI DATABASE CHÍNH THỨC (PRODUCTION DEPLOYMENT)
+================================================================================
+1. CƠ SỞ DỮ LIỆU CLOUD (Neon.tech PostgreSQL 17):
+   - Host: ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech
+     (Lưu ý: Luôn có đầy đủ tiền tố 'ep-little-' ở đầu)
+   - Port: 5432
+   - User: neondb_owner
+   - Password: npg_d5YybOm3HShF
+   - Database: neondb
+   - SSL/SSH: Chuyển sang tab SSH/SSL phía trên và tích chọn Use SSL (chọn mode là Require).
+   - JDBC URL (Spring Boot): jdbc:postgresql://ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require
+   - Connection URI: postgresql://neondb_owner:npg_d5YybOm3HShF@ep-little-water-b4t2fgoh-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+2. BACKEND API CLOUD (Render.com Web Service):
+   - Service Name: clinic-backend
+   - Live URL: https://clinic-backend-04f2.onrender.com
+   - API Base URL: https://clinic-backend-04f2.onrender.com/api/v1
+   - Swagger UI Docs: https://clinic-backend-04f2.onrender.com/swagger-ui.html
+   - OpenAPI Schema: https://clinic-backend-04f2.onrender.com/v3/api-docs
+
+3. FRONTEND UI CLOUD (Vercel):
+   - Repository: https://github.com/ndkien98/clinic-management
+   - Environment Variable: VITE_API_BASE_URL=https://clinic-backend-04f2.onrender.com/api/v1
+================================================================================
