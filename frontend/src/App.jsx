@@ -34,6 +34,8 @@ import {
   ClipboardList,
   Menu
 } from 'lucide-react';
+import PaginatedTable from './components/PaginatedTable';
+import AddMedicineModal from './components/AddMedicineModal';
 import { patientApi, clinicApi, masterApi, API_BASE_URL } from './api/client';
 
 export default function App() {
@@ -110,6 +112,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [showRestockModal, setShowRestockModal] = useState(false);
+  const [showAddMedicineModal, setShowAddMedicineModal] = useState(false);
   const [selectedMedForRestock, setSelectedMedForRestock] = useState(null);
   const [restockAmount, setRestockAmount] = useState(50);
 
@@ -142,6 +145,14 @@ export default function App() {
     maThuoc: '',
     soLuong: 10,
   });
+
+  const filteredPatients = patients.filter(
+    (p) =>
+      p.hoTen?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.maBN?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.sdt?.includes(searchQuery) ||
+      p.soCCCD?.includes(searchQuery)
+  );
 
   // Formatters
   const formatVND = (num) =>
@@ -883,59 +894,55 @@ export default function App() {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                    <tr>
-                      <th className="p-3.5">Mã BN</th>
-                      <th className="p-3.5">Họ Và Tên</th>
-                      <th className="p-3.5">Giới Tính</th>
-                      <th className="p-3.5">Ngày Sinh</th>
-                      <th className="p-3.5">Số CCCD</th>
-                      <th className="p-3.5">Số Điện Thoại</th>
-                      <th className="p-3.5">Địa Chỉ</th>
-                      <th className="p-3.5 text-right">Thao Tác Nghiệp Vụ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {patients
-                      .filter(
-                        (p) =>
-                          p.hoTen?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.maBN?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.sdt?.includes(searchQuery) ||
-                          p.soCCCD?.includes(searchQuery)
-                      )
-                      .map((p) => (
-                        <tr key={p.maBN} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{p.maBN}</td>
-                          <td className="p-3.5 font-medium text-slate-900">{p.hoTen}</td>
-                          <td className="p-3.5">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${p.gioiTinh === 'M' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}`}>
-                              {p.gioiTinh === 'M' ? 'Nam' : 'Nữ'}
-                            </span>
-                          </td>
-                          <td className="p-3.5">{p.ngaySinh || '---'}</td>
-                          <td className="p-3.5 font-mono">{p.soCCCD || '---'}</td>
-                          <td className="p-3.5">{p.sdt || '---'}</td>
-                          <td className="p-3.5 text-slate-500">{p.diaChi || '---'}</td>
-                          <td className="p-3.5 text-right space-x-2">
-                            <button
-                              onClick={() => handleOpenHoSo360(p.maBN)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded text-[11px] font-semibold transition"
-                            >
-                              <Eye className="w-3 h-3" /> Hồ Sơ 360°
-                            </button>
-                            <button
-                              onClick={() => handleDeletePatient(p.maBN)}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-rose-600 hover:bg-rose-50 rounded text-[11px] transition"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </td>
+                <PaginatedTable data={filteredPatients} resetKey={searchQuery}>
+                  {(pageRows) => (
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                        <tr>
+                          <th className="p-3.5">Mã BN</th>
+                          <th className="p-3.5">Họ Và Tên</th>
+                          <th className="p-3.5">Giới Tính</th>
+                          <th className="p-3.5">Ngày Sinh</th>
+                          <th className="p-3.5">Số CCCD</th>
+                          <th className="p-3.5">Số Điện Thoại</th>
+                          <th className="p-3.5">Địa Chỉ</th>
+                          <th className="p-3.5 text-right">Thao Tác Nghiệp Vụ</th>
                         </tr>
-                      ))}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {pageRows.map((p) => (
+                            <tr key={p.maBN} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{p.maBN}</td>
+                              <td className="p-3.5 font-medium text-slate-900">{p.hoTen}</td>
+                              <td className="p-3.5">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${p.gioiTinh === 'M' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}`}>
+                                  {p.gioiTinh === 'M' ? 'Nam' : 'Nữ'}
+                                </span>
+                              </td>
+                              <td className="p-3.5">{p.ngaySinh || '---'}</td>
+                              <td className="p-3.5 font-mono">{p.soCCCD || '---'}</td>
+                              <td className="p-3.5">{p.sdt || '---'}</td>
+                              <td className="p-3.5 text-slate-500">{p.diaChi || '---'}</td>
+                              <td className="p-3.5 text-right space-x-2">
+                                <button
+                                  onClick={() => handleOpenHoSo360(p.maBN)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded text-[11px] font-semibold transition"
+                                >
+                                  <Eye className="w-3 h-3" /> Hồ Sơ 360°
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePatient(p.maBN)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-rose-600 hover:bg-rose-50 rounded text-[11px] transition"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  )}
+                </PaginatedTable>
               </div>
             </div>
           )}
@@ -1179,55 +1186,59 @@ export default function App() {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                    <tr>
-                      <th className="p-3.5">Mã Đợt</th>
-                      <th className="p-3.5">Mã Sự Kiện Khám</th>
-                      <th className="p-3.5">Mã Bệnh</th>
-                      <th className="p-3.5">Mức Độ</th>
-                      <th className="p-3.5">Giường Bệnh</th>
-                      <th className="p-3.5">Ngày Bắt Đầu</th>
-                      <th className="p-3.5">Trạng Thái</th>
-                      <th className="p-3.5 text-right">Thao Tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {treatmentCourses.map((tc) => (
-                      <tr key={tc.maDotDieuTri} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3.5 font-mono font-bold text-teal-700">{tc.maDotDieuTri}</td>
-                        <td className="p-3.5 font-mono text-slate-600">{tc.maSuKienKham}</td>
-                        <td className="p-3.5 font-semibold text-slate-800">{tc.maBenh}</td>
-                        <td className="p-3.5">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                            tc.mucDoNang === 'Nang' ? 'bg-red-50 text-red-700' : tc.mucDoNang === 'Vua' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            {tc.mucDoNang}
-                          </span>
-                        </td>
-                        <td className="p-3.5 font-mono text-slate-600">{tc.maGiuong || 'Ngoại trú'}</td>
-                        <td className="p-3.5">{tc.ngayBatDau}</td>
-                        <td className="p-3.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            tc.trangThai === 'DangDieuTri' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          }`}>
-                            {tc.trangThai === 'DangDieuTri' ? 'Đang điều trị' : 'Đã khỏi'}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-right">
-                          {tc.trangThai === 'DangDieuTri' && (
-                            <button
-                              onClick={() => handleCloseTreatment(tc.maDotDieuTri)}
-                              className="px-2.5 py-1 bg-emerald-600 text-white rounded text-[11px] font-medium hover:bg-emerald-700 transition"
-                            >
-                              Kết luận khỏi bệnh
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <PaginatedTable data={treatmentCourses}>
+                  {(pageRows) => (
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                        <tr>
+                          <th className="p-3.5">Mã Đợt</th>
+                          <th className="p-3.5">Mã Sự Kiện Khám</th>
+                          <th className="p-3.5">Mã Bệnh</th>
+                          <th className="p-3.5">Mức Độ</th>
+                          <th className="p-3.5">Giường Bệnh</th>
+                          <th className="p-3.5">Ngày Bắt Đầu</th>
+                          <th className="p-3.5">Trạng Thái</th>
+                          <th className="p-3.5 text-right">Thao Tác</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {pageRows.map((tc) => (
+                          <tr key={tc.maDotDieuTri} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-3.5 font-mono font-bold text-teal-700">{tc.maDotDieuTri}</td>
+                            <td className="p-3.5 font-mono text-slate-600">{tc.maSuKienKham}</td>
+                            <td className="p-3.5 font-semibold text-slate-800">{tc.maBenh}</td>
+                            <td className="p-3.5">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                tc.mucDoNang === 'Nang' ? 'bg-red-50 text-red-700' : tc.mucDoNang === 'Vua' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                {tc.mucDoNang}
+                              </span>
+                            </td>
+                            <td className="p-3.5 font-mono text-slate-600">{tc.maGiuong || 'Ngoại trú'}</td>
+                            <td className="p-3.5">{tc.ngayBatDau}</td>
+                            <td className="p-3.5">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                tc.trangThai === 'DangDieuTri' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              }`}>
+                                {tc.trangThai === 'DangDieuTri' ? 'Đang điều trị' : 'Đã khỏi'}
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-right">
+                              {tc.trangThai === 'DangDieuTri' && (
+                                <button
+                                  onClick={() => handleCloseTreatment(tc.maDotDieuTri)}
+                                  className="px-2.5 py-1 bg-emerald-600 text-white rounded text-[11px] font-medium hover:bg-emerald-700 transition"
+                                >
+                                  Kết luận khỏi bệnh
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </PaginatedTable>
               </div>
             </div>
           )}
@@ -1237,57 +1248,67 @@ export default function App() {
             <div className="space-y-5">
               <div className="flex justify-between items-center">
                 <p className="text-xs text-slate-500">Danh mục thuốc & kiểm soát tồn kho tự động trong CSDL (bảng thuoc)</p>
+                <button
+                  onClick={() => setShowAddMedicineModal(true)}
+                  className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 flex items-center gap-1.5 shadow-sm transition shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Thêm dược phẩm
+                </button>
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                    <tr>
-                      <th className="p-3.5">Mã Thuốc</th>
-                      <th className="p-3.5">Tên Thuốc</th>
-                      <th className="p-3.5">Hãng Sản Xuất</th>
-                      <th className="p-3.5">Đơn Vị Tính</th>
-                      <th className="p-3.5">Đơn Giá</th>
-                      <th className="p-3.5">Tồn Kho</th>
-                      <th className="p-3.5">Tình Trạng</th>
-                      <th className="p-3.5 text-right">Thao Tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {medicines.map((m) => (
-                      <tr key={m.maThuoc} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3.5 font-mono font-bold text-teal-700">{m.maThuoc}</td>
-                        <td className="p-3.5 font-medium text-slate-900">{m.tenThuoc}</td>
-                        <td className="p-3.5">{m.hangSX || 'Việt Nam'}</td>
-                        <td className="p-3.5">{m.donViTinh}</td>
-                        <td className="p-3.5 font-semibold text-slate-800">{formatVND(m.donGia)}</td>
-                        <td className="p-3.5 font-bold">{m.tonKho}</td>
-                        <td className="p-3.5">
-                          {m.tonKho < 200 ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
-                              <AlertCircle className="w-3 h-3" /> Cần nhập thêm
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                              <CheckCircle2 className="w-3 h-3" /> Đầy đủ
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3.5 text-right">
-                          <button
-                            onClick={() => {
-                              setSelectedMedForRestock(m);
-                              setShowRestockModal(true);
-                            }}
-                            className="px-2.5 py-1 bg-slate-800 text-white rounded text-[11px] font-medium hover:bg-slate-900 transition"
-                          >
-                            + Nhập kho
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <PaginatedTable data={medicines} resetKey={medicines.length}>
+                  {(pageRows) => (
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                        <tr>
+                          <th className="p-3.5">Mã Thuốc</th>
+                          <th className="p-3.5">Tên Thuốc</th>
+                          <th className="p-3.5">Hãng Sản Xuất</th>
+                          <th className="p-3.5">Đơn Vị Tính</th>
+                          <th className="p-3.5">Đơn Giá</th>
+                          <th className="p-3.5">Tồn Kho</th>
+                          <th className="p-3.5">Tình Trạng</th>
+                          <th className="p-3.5 text-right">Thao Tác</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {pageRows.map((m) => (
+                          <tr key={m.maThuoc} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-3.5 font-mono font-bold text-teal-700">{m.maThuoc}</td>
+                            <td className="p-3.5 font-medium text-slate-900">{m.tenThuoc}</td>
+                            <td className="p-3.5">{m.hangSX || 'Việt Nam'}</td>
+                            <td className="p-3.5">{m.donViTinh}</td>
+                            <td className="p-3.5 font-semibold text-slate-800">{formatVND(m.donGia)}</td>
+                            <td className="p-3.5 font-bold">{m.tonKho}</td>
+                            <td className="p-3.5">
+                              {m.tonKho < 200 ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
+                                  <AlertCircle className="w-3 h-3" /> Cần nhập thêm
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                                  <CheckCircle2 className="w-3 h-3" /> Đầy đủ
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3.5 text-right">
+                              <button
+                                onClick={() => {
+                                  setSelectedMedForRestock(m);
+                                  setShowRestockModal(true);
+                                }}
+                                className="px-2.5 py-1 bg-slate-800 text-white rounded text-[11px] font-medium hover:bg-slate-900 transition"
+                              >
+                                + Nhập kho
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </PaginatedTable>
               </div>
             </div>
           )}
@@ -1300,43 +1321,47 @@ export default function App() {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                    <tr>
-                      <th className="p-3.5">Mã Sự Kiện</th>
-                      <th className="p-3.5">Ngày Lập Hóa Đơn</th>
-                      <th className="p-3.5">Tổng Tiền Viện Phí</th>
-                      <th className="p-3.5">Trạng Thái Thu Phí</th>
-                      <th className="p-3.5 text-right">Hành Động</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {invoices.map((inv) => (
-                      <tr key={inv.maSuKien} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3.5 font-mono font-bold text-teal-700">{inv.maSuKien}</td>
-                        <td className="p-3.5">{inv.ngayLap?.replace('T', ' ')?.slice(0, 19) || '---'}</td>
-                        <td className="p-3.5 font-bold text-slate-900">{formatVND(inv.tongTien)}</td>
-                        <td className="p-3.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            inv.trangThaiTT === 'DaThanhToan' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
-                          }`}>
-                            {inv.trangThaiTT === 'DaThanhToan' ? 'Đã Thanh Toán' : 'Chưa Thanh Toán'}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-right">
-                          {inv.trangThaiTT !== 'DaThanhToan' && (
-                            <button
-                              onClick={() => handlePayInvoice(inv.maSuKien)}
-                              className="px-3 py-1 bg-teal-600 text-white rounded text-[11px] font-semibold hover:bg-teal-700 transition shadow-xs"
-                            >
-                              Xác Nhận Thu Phí
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <PaginatedTable data={invoices}>
+                  {(pageRows) => (
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                        <tr>
+                          <th className="p-3.5">Mã Sự Kiện</th>
+                          <th className="p-3.5">Ngày Lập Hóa Đơn</th>
+                          <th className="p-3.5">Tổng Tiền Viện Phí</th>
+                          <th className="p-3.5">Trạng Thái Thu Phí</th>
+                          <th className="p-3.5 text-right">Hành Động</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {pageRows.map((inv) => (
+                          <tr key={inv.maSuKien} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-3.5 font-mono font-bold text-teal-700">{inv.maSuKien}</td>
+                            <td className="p-3.5">{inv.ngayLap?.replace('T', ' ')?.slice(0, 19) || '---'}</td>
+                            <td className="p-3.5 font-bold text-slate-900">{formatVND(inv.tongTien)}</td>
+                            <td className="p-3.5">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                inv.trangThaiTT === 'DaThanhToan' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {inv.trangThaiTT === 'DaThanhToan' ? 'Đã Thanh Toán' : 'Chưa Thanh Toán'}
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-right">
+                              {inv.trangThaiTT !== 'DaThanhToan' && (
+                                <button
+                                  onClick={() => handlePayInvoice(inv.maSuKien)}
+                                  className="px-3 py-1 bg-teal-600 text-white rounded text-[11px] font-semibold hover:bg-teal-700 transition shadow-xs"
+                                >
+                                  Xác Nhận Thu Phí
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </PaginatedTable>
               </div>
             </div>
           )}
@@ -1388,250 +1413,278 @@ export default function App() {
               {/* Bảng Bác Sĩ */}
               {masterTab === 'bac-sy' && (
                 <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3.5">Mã Bác Sĩ</th>
-                        <th className="p-3.5">Chuyên Môn</th>
-                        <th className="p-3.5 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {doctors.map((d) => (
-                        <tr key={d.maBS} className="hover:bg-slate-50/80">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{d.maBS}</td>
-                          <td className="p-3.5 font-medium">{d.chuyenMon || 'Bác sĩ chuyên khoa'}</td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => handleDeleteMasterData('bac-sy', d.maBS)}
-                              className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <PaginatedTable data={doctors}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5">Mã Bác Sĩ</th>
+                            <th className="p-3.5">Chuyên Môn</th>
+                            <th className="p-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {pageRows.map((d) => (
+                            <tr key={d.maBS} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{d.maBS}</td>
+                              <td className="p-3.5 font-medium">{d.chuyenMon || 'Bác sĩ chuyên khoa'}</td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleDeleteMasterData('bac-sy', d.maBS)}
+                                  className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               )}
 
               {/* Bảng Y Tá */}
               {masterTab === 'y-ta' && (
                 <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3.5">Mã Y Tá</th>
-                        <th className="p-3.5">Trình Độ</th>
-                        <th className="p-3.5 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {masterNurses.map((n) => (
-                        <tr key={n.maYTa} className="hover:bg-slate-50/80">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{n.maYTa}</td>
-                          <td className="p-3.5 font-medium">{n.trinhDo || 'Cử nhân điều dưỡng'}</td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => handleDeleteMasterData('y-ta', n.maYTa)}
-                              className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <PaginatedTable data={masterNurses}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5">Mã Y Tá</th>
+                            <th className="p-3.5">Trình Độ</th>
+                            <th className="p-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {pageRows.map((n) => (
+                            <tr key={n.maYTa} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{n.maYTa}</td>
+                              <td className="p-3.5 font-medium">{n.trinhDo || 'Cử nhân điều dưỡng'}</td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleDeleteMasterData('y-ta', n.maYTa)}
+                                  className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               )}
 
               {/* Bảng Danh Mục Bệnh */}
               {masterTab === 'danh-muc-benh' && (
                 <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3.5">Mã Bệnh</th>
-                        <th className="p-3.5">Tên Bệnh Lý</th>
-                        <th className="p-3.5">Khoa Điều Trị</th>
-                        <th className="p-3.5">Mô Tả Bệnh</th>
-                        <th className="p-3.5 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {diseases.map((dis) => (
-                        <tr key={dis.maBenh} className="hover:bg-slate-50/80">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{dis.maBenh}</td>
-                          <td className="p-3.5 font-bold text-slate-900">{dis.tenBenh}</td>
-                          <td className="p-3.5 font-medium text-slate-600">{dis.maKhoa || '---'}</td>
-                          <td className="p-3.5 text-slate-500">{dis.moTa || '---'}</td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => handleDeleteMasterData('danh-muc-benh', dis.maBenh)}
-                              className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <PaginatedTable data={diseases}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5">Mã Bệnh</th>
+                            <th className="p-3.5">Tên Bệnh Lý</th>
+                            <th className="p-3.5">Khoa Điều Trị</th>
+                            <th className="p-3.5">Mô Tả Bệnh</th>
+                            <th className="p-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {pageRows.map((dis) => (
+                            <tr key={dis.maBenh} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{dis.maBenh}</td>
+                              <td className="p-3.5 font-bold text-slate-900">{dis.tenBenh}</td>
+                              <td className="p-3.5 font-medium text-slate-600">{dis.maKhoa || '---'}</td>
+                              <td className="p-3.5 text-slate-500">{dis.moTa || '---'}</td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleDeleteMasterData('danh-muc-benh', dis.maBenh)}
+                                  className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               )}
 
               {/* Bảng Thiết Bị Y Tế */}
               {masterTab === 'thiet-bi' && (
                 <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3.5">Mã Thiết Bị</th>
-                        <th className="p-3.5">Tên Thiết Bị</th>
-                        <th className="p-3.5">Khoa Phụ Trách</th>
-                        <th className="p-3.5">Tình Trạng</th>
-                        <th className="p-3.5 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {masterDevices.map((tb) => (
-                        <tr key={tb.maTB} className="hover:bg-slate-50/80">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{tb.maTB}</td>
-                          <td className="p-3.5 font-bold text-slate-900">{tb.tenTB}</td>
-                          <td className="p-3.5 text-slate-600">{tb.maKhoa || 'Chung'}</td>
-                          <td className="p-3.5">
-                            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold text-[10px]">
-                              {tb.tinhTrang || 'Hoạt động tốt'}
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => handleDeleteMasterData('thiet-bi', tb.maTB)}
-                              className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <PaginatedTable data={masterDevices}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5">Mã Thiết Bị</th>
+                            <th className="p-3.5">Tên Thiết Bị</th>
+                            <th className="p-3.5">Khoa Phụ Trách</th>
+                            <th className="p-3.5">Tình Trạng</th>
+                            <th className="p-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {pageRows.map((tb) => (
+                            <tr key={tb.maTB} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{tb.maTB}</td>
+                              <td className="p-3.5 font-bold text-slate-900">{tb.tenTB}</td>
+                              <td className="p-3.5 text-slate-600">{tb.maKhoa || 'Chung'}</td>
+                              <td className="p-3.5">
+                                <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold text-[10px]">
+                                  {tb.tinhTrang || 'Hoạt động tốt'}
+                                </span>
+                              </td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleDeleteMasterData('thiet-bi', tb.maTB)}
+                                  className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               )}
 
               {/* Bảng Dịch Vụ Y Tế */}
               {masterTab === 'dich-vu' && (
                 <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3.5">Mã Dịch Vụ</th>
-                        <th className="p-3.5">Tên Dịch Vụ</th>
-                        <th className="p-3.5">Đơn Giá Viện Phí</th>
-                        <th className="p-3.5">Mô Tả Kỹ Thuật</th>
-                        <th className="p-3.5 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {masterServices.map((dv) => (
-                        <tr key={dv.maDV} className="hover:bg-slate-50/80">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{dv.maDV}</td>
-                          <td className="p-3.5 font-bold text-slate-900">{dv.tenDV}</td>
-                          <td className="p-3.5 font-semibold text-emerald-700">{formatVND(dv.donGia)}</td>
-                          <td className="p-3.5 text-slate-500">{dv.moTa || '---'}</td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => handleDeleteMasterData('dich-vu', dv.maDV)}
-                              className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <PaginatedTable data={masterServices}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5">Mã Dịch Vụ</th>
+                            <th className="p-3.5">Tên Dịch Vụ</th>
+                            <th className="p-3.5">Đơn Giá Viện Phí</th>
+                            <th className="p-3.5">Mô Tả Kỹ Thuật</th>
+                            <th className="p-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {pageRows.map((dv) => (
+                            <tr key={dv.maDV} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{dv.maDV}</td>
+                              <td className="p-3.5 font-bold text-slate-900">{dv.tenDV}</td>
+                              <td className="p-3.5 font-semibold text-emerald-700">{formatVND(dv.donGia)}</td>
+                              <td className="p-3.5 text-slate-500">{dv.moTa || '---'}</td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleDeleteMasterData('dich-vu', dv.maDV)}
+                                  className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               )}
 
               {/* Bảng Phòng Khám */}
               {masterTab === 'phong-kham' && (
                 <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3.5">Mã Phòng</th>
-                        <th className="p-3.5">Tên Phòng Khám</th>
-                        <th className="p-3.5">Khoa Trực Thuộc</th>
-                        <th className="p-3.5 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {masterRooms.map((r) => (
-                        <tr key={r.maPhong} className="hover:bg-slate-50/80">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{r.maPhong}</td>
-                          <td className="p-3.5 font-bold text-slate-900">{r.tenPhong}</td>
-                          <td className="p-3.5 text-slate-600">{r.maKhoa}</td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => handleDeleteMasterData('phong-kham', r.maPhong)}
-                              className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <PaginatedTable data={masterRooms}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5">Mã Phòng</th>
+                            <th className="p-3.5">Tên Phòng Khám</th>
+                            <th className="p-3.5">Khoa Trực Thuộc</th>
+                            <th className="p-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {pageRows.map((r) => (
+                            <tr key={r.maPhong} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{r.maPhong}</td>
+                              <td className="p-3.5 font-bold text-slate-900">{r.tenPhong}</td>
+                              <td className="p-3.5 text-slate-600">{r.maKhoa}</td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleDeleteMasterData('phong-kham', r.maPhong)}
+                                  className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               )}
 
               {/* Bảng Giường Bệnh */}
               {masterTab === 'giuong-benh' && (
                 <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3.5">Mã Giường</th>
-                        <th className="p-3.5">Phòng Khám</th>
-                        <th className="p-3.5">Trạng Thái Giường</th>
-                        <th className="p-3.5 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {masterBeds.map((b) => (
-                        <tr key={b.maGiuong} className="hover:bg-slate-50/80">
-                          <td className="p-3.5 font-mono font-bold text-teal-700">{b.maGiuong}</td>
-                          <td className="p-3.5 font-medium">{b.maPhong}</td>
-                          <td className="p-3.5">
-                            <span className={`px-2 py-0.5 rounded font-semibold text-[10px] ${
-                              b.trangThai === 'Trong' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                            }`}>
-                              {b.trangThai === 'Trong' ? 'Trống' : 'Đang sử dụng'}
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() => handleDeleteMasterData('giuong-benh', b.maGiuong)}
-                              className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <PaginatedTable data={masterBeds}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5">Mã Giường</th>
+                            <th className="p-3.5">Phòng Khám</th>
+                            <th className="p-3.5">Trạng Thái Giường</th>
+                            <th className="p-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {pageRows.map((b) => (
+                            <tr key={b.maGiuong} className="hover:bg-slate-50/80">
+                              <td className="p-3.5 font-mono font-bold text-teal-700">{b.maGiuong}</td>
+                              <td className="p-3.5 font-medium">{b.maPhong}</td>
+                              <td className="p-3.5">
+                                <span className={`px-2 py-0.5 rounded font-semibold text-[10px] ${
+                                  b.trangThai === 'Trong' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                                }`}>
+                                  {b.trangThai === 'Trong' ? 'Trống' : 'Đang sử dụng'}
+                                </span>
+                              </td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  onClick={() => handleDeleteMasterData('giuong-benh', b.maGiuong)}
+                                  className="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               )}
             </div>
@@ -1713,42 +1766,46 @@ export default function App() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3">Hạng</th>
-                        <th className="p-3">Mã Bệnh</th>
-                        <th className="p-3">Tên Bệnh Lý</th>
-                        <th className="p-3">Khoa Phụ Trách</th>
-                        <th className="p-3 text-center">Tổng Số Ca Mắc</th>
-                        <th className="p-3 text-center">Số Bệnh Nhân</th>
-                        <th className="p-3 text-center">Đợt Mới</th>
-                        <th className="p-3 text-center">Đợt Tái Phát</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {monthlyDiseases.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="p-4 text-center text-slate-400">
-                            Không có dữ liệu bệnh lý phát sinh trong tháng {selectedMonth}.
-                          </td>
-                        </tr>
-                      ) : (
-                        monthlyDiseases.map((b, idx) => (
-                          <tr key={b.maBenh} className="hover:bg-slate-50/80">
-                            <td className="p-3 font-bold text-slate-400">#{idx + 1}</td>
-                            <td className="p-3 font-mono font-bold text-teal-700">{b.maBenh}</td>
-                            <td className="p-3 font-semibold text-slate-900">{b.tenBenh}</td>
-                            <td className="p-3 text-slate-600">{b.nhomBenh || b.khoa || 'Chuyên khoa'}</td>
-                            <td className="p-3 text-center font-bold text-rose-600">{b.soCaMac}</td>
-                            <td className="p-3 text-center font-medium">{b.soBenhNhanDuyNhat || b.soBenhNhan || 0}</td>
-                            <td className="p-3 text-center text-emerald-600 font-medium">{b.soCaMac - (b.soCaTaiPhat || 0)}</td>
-                            <td className="p-3 text-center text-amber-600 font-medium">{b.soCaTaiPhat || b.soDotTaiPhat || 0}</td>
+                  <PaginatedTable data={monthlyDiseases} resetKey={selectedMonth}>
+                    {(pageRows, startIndex) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3">Hạng</th>
+                            <th className="p-3">Mã Bệnh</th>
+                            <th className="p-3">Tên Bệnh Lý</th>
+                            <th className="p-3">Khoa Phụ Trách</th>
+                            <th className="p-3 text-center">Tổng Số Ca Mắc</th>
+                            <th className="p-3 text-center">Số Bệnh Nhân</th>
+                            <th className="p-3 text-center">Đợt Mới</th>
+                            <th className="p-3 text-center">Đợt Tái Phát</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {monthlyDiseases.length === 0 ? (
+                            <tr>
+                              <td colSpan={8} className="p-4 text-center text-slate-400">
+                                Không có dữ liệu bệnh lý phát sinh trong tháng {selectedMonth}.
+                              </td>
+                            </tr>
+                          ) : (
+                            pageRows.map((b, idx) => (
+                              <tr key={b.maBenh} className="hover:bg-slate-50/80">
+                                <td className="p-3 font-bold text-slate-400">#{startIndex + idx + 1}</td>
+                                <td className="p-3 font-mono font-bold text-teal-700">{b.maBenh}</td>
+                                <td className="p-3 font-semibold text-slate-900">{b.tenBenh}</td>
+                                <td className="p-3 text-slate-600">{b.nhomBenh || b.khoa || 'Chuyên khoa'}</td>
+                                <td className="p-3 text-center font-bold text-rose-600">{b.soCaMac}</td>
+                                <td className="p-3 text-center font-medium">{b.soBenhNhanDuyNhat || b.soBenhNhan || 0}</td>
+                                <td className="p-3 text-center text-emerald-600 font-medium">{b.soCaMac - (b.soCaTaiPhat || 0)}</td>
+                                <td className="p-3 text-center text-amber-600 font-medium">{b.soCaTaiPhat || b.soDotTaiPhat || 0}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               </div>
 
@@ -1765,52 +1822,56 @@ export default function App() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3">Mã NV</th>
-                        <th className="p-3">Họ Tên</th>
-                        <th className="p-3">Vị Trí</th>
-                        <th className="p-3">Chuyên Môn/Trình Độ</th>
-                        <th className="p-3">Lương Cơ Bản</th>
-                        <th className="p-3">Hệ Số</th>
-                        <th className="p-3 text-center">Thành Tích Tháng</th>
-                        <th className="p-3">Tiền Thưởng</th>
-                        <th className="p-3 text-right">Tổng Thực Lĩnh</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {detailedSalaries.length === 0 ? (
-                        <tr>
-                          <td colSpan={9} className="p-4 text-center text-slate-400">
-                            Chưa có dữ liệu bảng lương tháng {selectedMonth}.
-                          </td>
-                        </tr>
-                      ) : (
-                        detailedSalaries.map((s) => (
-                          <tr key={s.maNV} className="hover:bg-slate-50/80">
-                            <td className="p-3 font-mono font-bold text-teal-700">{s.maNV}</td>
-                            <td className="p-3 font-bold text-slate-900">{s.hoTen}</td>
-                            <td className="p-3">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                s.loaiNV === 'Bác sĩ' ? 'bg-indigo-50 text-indigo-700' : 'bg-pink-50 text-pink-700'
-                              }`}>
-                                {s.loaiNV}
-                              </span>
-                            </td>
-                            <td className="p-3 text-slate-600">{s.chuyenMon || s.trinhDo || '---'}</td>
-                            <td className="p-3">{formatVND(s.luongCoBan)}</td>
-                            <td className="p-3 font-mono">{s.heSoLuong}</td>
-                            <td className="p-3 text-center font-bold text-teal-700">
-                              {s.loaiNV === 'Bác sĩ' ? `${s.soCaKhoiBenh} ca khỏi` : `${s.soLuotHoTro} lượt HT`}
-                            </td>
-                            <td className="p-3 font-medium text-emerald-600">{formatVND(s.tienThuong)}</td>
-                            <td className="p-3 text-right font-extrabold text-slate-900">{formatVND(s.tongLuong)}</td>
+                  <PaginatedTable data={detailedSalaries} resetKey={selectedMonth}>
+                    {(pageRows) => (
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3">Mã NV</th>
+                            <th className="p-3">Họ Tên</th>
+                            <th className="p-3">Vị Trí</th>
+                            <th className="p-3">Chuyên Môn/Trình Độ</th>
+                            <th className="p-3">Lương Cơ Bản</th>
+                            <th className="p-3">Hệ Số</th>
+                            <th className="p-3 text-center">Thành Tích Tháng</th>
+                            <th className="p-3">Tiền Thưởng</th>
+                            <th className="p-3 text-right">Tổng Thực Lĩnh</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {detailedSalaries.length === 0 ? (
+                            <tr>
+                              <td colSpan={9} className="p-4 text-center text-slate-400">
+                                Chưa có dữ liệu bảng lương tháng {selectedMonth}.
+                              </td>
+                            </tr>
+                          ) : (
+                            pageRows.map((s) => (
+                              <tr key={s.maNV} className="hover:bg-slate-50/80">
+                                <td className="p-3 font-mono font-bold text-teal-700">{s.maNV}</td>
+                                <td className="p-3 font-bold text-slate-900">{s.hoTen}</td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                    s.loaiNV === 'Bác sĩ' ? 'bg-indigo-50 text-indigo-700' : 'bg-pink-50 text-pink-700'
+                                  }`}>
+                                    {s.loaiNV}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-slate-600">{s.chuyenMon || s.trinhDo || '---'}</td>
+                                <td className="p-3">{formatVND(s.luongCoBan)}</td>
+                                <td className="p-3 font-mono">{s.heSoLuong}</td>
+                                <td className="p-3 text-center font-bold text-teal-700">
+                                  {s.loaiNV === 'Bác sĩ' ? `${s.soCaKhoiBenh} ca khỏi` : `${s.soLuotHoTro} lượt HT`}
+                                </td>
+                                <td className="p-3 font-medium text-emerald-600">{formatVND(s.tienThuong)}</td>
+                                <td className="p-3 text-right font-extrabold text-slate-900">{formatVND(s.tongLuong)}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    )}
+                  </PaginatedTable>
                 </div>
               </div>
             </div>
@@ -1958,32 +2019,36 @@ export default function App() {
                             {/* Bảng kê chi phí chi tiết */}
                             <div>
                               <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Chi tiết các khoản mục thanh toán (HoaDonChiTiet):</span>
-                              <table className="w-full text-left text-[11px] bg-white rounded border border-slate-200">
-                                <thead className="bg-slate-100 text-slate-600 font-semibold">
-                                  <tr>
-                                    <th className="p-2">Dòng</th>
-                                    <th className="p-2">Nội Dung Khoản Mục</th>
-                                    <th className="p-2">Số Lượng</th>
-                                    <th className="p-2">Đơn Giá</th>
-                                    <th className="p-2 text-right">Thành Tiền</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                  {sk.cacKhoanChiPhi?.map((cp) => (
-                                    <tr key={cp.soDong}>
-                                      <td className="p-2 font-mono text-slate-400">#{cp.soDong}</td>
-                                      <td className="p-2 font-medium text-slate-800">{cp.moTaKhoanMuc || cp.noiDung}</td>
-                                      <td className="p-2">{cp.soLuong || 1}</td>
-                                      <td className="p-2">{formatVND(cp.donGia || (cp.soTien ? (cp.soTien / (cp.soLuong || 1)) : 0))}</td>
-                                      <td className="p-2 text-right font-bold text-slate-900">{formatVND(cp.soTien || cp.thanhTien)}</td>
-                                    </tr>
-                                  ))}
-                                  <tr className="bg-slate-50 font-bold">
-                                    <td colSpan={4} className="p-2 text-right text-slate-700">Tổng Viện Phí Sự Kiện:</td>
-                                    <td className="p-2 text-right text-teal-700 font-extrabold">{formatVND(sk.tongTien || sk.tongTienHoaDon || 0)}</td>
-                                  </tr>
-                                </tbody>
-                              </table>
+                              <PaginatedTable data={sk.cacKhoanChiPhi ?? []}>
+                                {(pageRows) => (
+                                  <table className="w-full text-left text-[11px] bg-white rounded border border-slate-200">
+                                    <thead className="bg-slate-100 text-slate-600 font-semibold">
+                                      <tr>
+                                        <th className="p-2">Dòng</th>
+                                        <th className="p-2">Nội Dung Khoản Mục</th>
+                                        <th className="p-2">Số Lượng</th>
+                                        <th className="p-2">Đơn Giá</th>
+                                        <th className="p-2 text-right">Thành Tiền</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                      {pageRows.map((cp) => (
+                                        <tr key={cp.soDong}>
+                                          <td className="p-2 font-mono text-slate-400">#{cp.soDong}</td>
+                                          <td className="p-2 font-medium text-slate-800">{cp.moTaKhoanMuc || cp.noiDung}</td>
+                                          <td className="p-2">{cp.soLuong || 1}</td>
+                                          <td className="p-2">{formatVND(cp.donGia || (cp.soTien ? (cp.soTien / (cp.soLuong || 1)) : 0))}</td>
+                                          <td className="p-2 text-right font-bold text-slate-900">{formatVND(cp.soTien || cp.thanhTien)}</td>
+                                        </tr>
+                                      ))}
+                                      <tr className="bg-slate-50 font-bold">
+                                        <td colSpan={4} className="p-2 text-right text-slate-700">Tổng Viện Phí Sự Kiện:</td>
+                                        <td className="p-2 text-right text-teal-700 font-extrabold">{formatVND(sk.tongTien || sk.tongTienHoaDon || 0)}</td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                )}
+                              </PaginatedTable>
                             </div>
                           </div>
                         ))}
@@ -2394,6 +2459,18 @@ export default function App() {
       )}
 
       {/* MODAL NHẬP THÊM TỒN KHO THUỐC */}
+      {showAddMedicineModal && (
+        <AddMedicineModal
+          medicines={medicines}
+          onClose={() => setShowAddMedicineModal(false)}
+          onCreated={(medicine) => {
+            setMedicines((previous) => [medicine, ...previous]);
+            setRxForm((previous) => ({ ...previous, maThuoc: previous.maThuoc || medicine.maThuoc }));
+            setShowAddMedicineModal(false);
+            addToast('success', `Đã thêm dược phẩm ${medicine.tenThuoc} thành công!`);
+          }}
+        />
+      )}
       {showRestockModal && selectedMedForRestock && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
